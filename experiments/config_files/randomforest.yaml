@@ -1,0 +1,30 @@
+data_params:
+    path: '../data/'
+    dataset: 'fordb'
+    model: 'randomforest'
+    num_labels: 500
+    seed: 1249
+    features: True
+    val_size: 1000
+    test_size: 2000
+
+exp_params:
+    mlflow_id: 1
+    mlflow_name: None
+    model_name: 'randomforest'
+
+model_params:
+    n_estimators: 15
+    max_depth: 3
+
+search_space:
+    n_estimators:
+        low: 10
+        high: 1000
+        step: 10
+        type: "int"
+    max_depth:
+        low: 3
+        high: 25
+        step: 1
+        type: "int"

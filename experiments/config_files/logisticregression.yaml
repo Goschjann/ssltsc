@@ -1,0 +1,26 @@
+data_params:
+    path: '../data/'
+    dataset: 'pamap2'
+    model: 'logisticregression'
+    num_labels: 500
+    seed: 1249
+    features: True
+    val_size: 1000
+    test_size: 2000
+
+exp_params:
+    mlflow_id: 1
+    mlflow_name: 'tune_ml'
+    model_name: 'logisticregression'
+
+model_params:
+    penalty: "none"
+    max_iter: 1000
+
+search_space:
+    penalty:
+        type: "categorical"
+        choices:
+            - "l1"
+            - "l2"
+            - "none"

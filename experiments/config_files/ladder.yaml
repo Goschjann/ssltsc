@@ -1,0 +1,81 @@
+# 5 different param blocks
+logging_params:
+    mlflow_name: 'ladder_exp'
+
+exp_params:
+    n_steps: 25000
+    val_steps: 5000
+    lr_scheduler: None
+    backbone: 'ladder'
+    model_name: 'ladder'
+    mlflow_id: 1
+    mlflow_name: 'laddernet'
+    early_stopping: False
+    early_stopping_metric: 'val_weighted_auc'
+
+data_params:
+    path: '../data/'
+    dataset: 'wisdm'
+    model: 'ladder'
+    num_labels: 1000
+    seed: 1249
+    K: 1
+    features: False
+    da_strategy: None
+    batch_size: 100
+    labeled_batch_size: 50
+    inference_batch_size: 128
+    standardize: False
+    normalize: False
+    scale_overall: True
+    scale_channelwise: False
+    sample_supervised: False
+    num_workers: 0
+    N: 3
+    magnitude: 1
+    val_size: 100
+    test_size: 2000
+
+model_params:
+    lr: 0.0002
+    weight_decay: 0.0
+    noise_sd: 0.8
+    loss_weights:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+
+search_space:
+    lr:
+        low: 0.000001
+        high: 0.001
+        step: 0.0005
+        type: "float"
+    weight_decay:
+        low: 0.0
+        high: 0.001
+        step: 0.0001
+        type: "float"
+    noise_sd:
+        type: "categorical"
+        choices:
+            - 0.1
+            - 0.3
+            - 0.45
+            - 0.6
+    loss_weights:
+        length: 5
+        low: 0.1
+        high: 10.0
+    magnitude:
+        low: 1
+        high: 10
+        step: 1
+        type: "int"
+    N:
+        low: 1
+        high: 6
+        step: 1
+        type: "int"

@@ -1,0 +1,72 @@
+# 5 different param blocks
+
+logging_params:
+   mlflow_name: 'self_sup_exp'
+
+exp_params:
+    n_steps: 60
+    val_steps: 20
+    lr_scheduler: None
+    backbone: 'fcnmultitask'
+    model_name: 'selfsupervised'
+    mlflow_id: 1
+    mlflow_name: 'oof'
+    early_stopping: False
+    early_stopping_metric: 'val_weighted_auc'
+
+model_params:
+    mixup: False
+    lr: 0.0001
+    weight_decay: 0.00005
+    lambda: 1.0
+    horizon: 0.2
+    stride: 0.3
+
+data_params:
+    path: '../data/'
+    dataset: 'pamap2'
+    model: 'selfsupervised'
+    num_labels: 500
+    seed: 1249
+    K: 1
+    features: False
+    da_strategy: None
+    batch_size: 64
+    labeled_batch_size: 16
+    inference_batch_size: 128
+    standardize: False
+    normalize: False
+    scale_overall: True
+    scale_channelwise: False
+    sample_supervised: True
+    num_workers: 6
+    fully_labeled: True
+    N: 3
+    magnitude: 1
+    horizon: 0.2
+    stride: 0.3
+    val_size: 100
+    test_size: 2000
+
+search_space:
+    lr:
+        low: 0.000001
+        high: 0.01
+        type: "log"
+    weight_decay:
+        low: 0.0000001
+        high: 0.001
+        type: "log"
+    horizon:
+        type: "categorical"
+        choices:
+            - 0.1
+            - 0.2
+            - 0.3
+    stride:
+        type: "categorical"
+        choices:
+            - 0.05
+            - 0.1
+            - 0.2
+            - 0.3
