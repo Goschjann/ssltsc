@@ -49,10 +49,9 @@ class UCR(TimeseriesDataset):
         final_path = os.path.join(self.root, self.base_folder)
         extracted_path = os.path.join(self.root, f'{dataset}_download')
 
-
         if not os.path.exists(final_path):
-            os.mkdir(final_path)
-            os.mkdir(extracted_path)
+            os.makedirs(final_path)
+            os.makedirs(extracted_path)
         else:
             return
 
