@@ -316,3 +316,9 @@ test_cifar10_transformation_5 = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
+
+
+daug_proc = [TSTimeWarp,
+            TSMagWarp,
+            TSTimeNoise,
+            TSMagScale]
