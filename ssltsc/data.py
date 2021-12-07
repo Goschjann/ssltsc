@@ -9,7 +9,6 @@ from dl4d.datasets.ucr import CROP, FordB, ElectricDevices
 from dl4d.datasets.sits import SITS
 from dl4d.datasets.wisdm import WISDM
 from dl4d.datasets.cifar10 import Cifar10
-from dl4d.datasets.suresort import Suresort
 from dl4d.datasets.svhn import SVHN
 from dl4d.sampler import SemiSupervisionSampler, SupervisionSampler
 from dl4d.transforms import TSRandomCrop, TSTimeWarp, TSMagWarp, TSMagScale, TSTimeNoise, TSCutOut, TSMagNoise, RandAugment, DuplicateTransform
@@ -104,8 +103,7 @@ def load_dataloaders(path: str,
         'sits': SITS,
         'wisdm': WISDM,
         'cifar10': Cifar10,
-        'svhn': SVHN,
-        'suresort': Suresort
+        'svhn': SVHN
     }
 
 
@@ -318,3 +316,9 @@ test_cifar10_transformation_5 = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
+
+
+daug_proc = [TSTimeWarp,
+            TSMagWarp,
+            TSTimeNoise,
+            TSMagScale]

@@ -19,7 +19,6 @@ from ssltsc.architectures.convnet13 import ConvNet13
 from ssltsc.architectures.ResNet import ResNet
 from ssltsc.architectures.InceptionTime import InceptionTime
 from ssltsc.architectures.ResCNN import ResCNN
-from ssltsc.architectures.resnetsuresort import ResnetSuresort
 
 def backbone_factory(architecture, dataset, n_classes, n_channels, lengthts, horizon=None):
     """Creates backbone and backbone dictionary for
@@ -31,9 +30,6 @@ def backbone_factory(architecture, dataset, n_classes, n_channels, lengthts, hor
     elif architecture == 'convnet13':
         backbone_dict = {'n_classes': n_classes}
         backbone = ConvNet13
-    elif architecture == 'resnetsuresort':
-        backbone_dict = {'n_classes': n_classes}
-        backbone = ResnetSuresort
     elif architecture == 'FCN':
         backbone = FCN
         backbone_dict = {'c_in': n_channels,
