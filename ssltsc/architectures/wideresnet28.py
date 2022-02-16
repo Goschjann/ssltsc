@@ -16,8 +16,7 @@ import pdb
 from torch.autograd import Variable, Function
 from torch.nn import Parameter
 
-# use float64 instead of the default float32
-torch.set_default_dtype(torch.float64)
+torch.set_default_dtype(torch.float32)
 
 class BasicBlock(nn.Module):
     def __init__(self, in_planes, out_planes, stride, dropRate=0.0, activate_before_residual=False):

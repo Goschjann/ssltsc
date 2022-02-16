@@ -28,7 +28,7 @@ def ema_update(student, teacher, alpha=0.9, verbose=False):
     """
     for teacher_param, student_param in zip(teacher.parameters(), student.parameters()):
         # alpha * theta'_t-1 + (1-a) * theta_t
-        teacher_param.data.mul_(alpha).add_(1 - alpha, student_param.data)
+        teacher_param.data.mul_(alpha).add_(student_param.data, alpha=1 - alpha)
         if verbose:
             print(teacher_param.data.equal(student_param.data))
 

@@ -72,6 +72,8 @@ class SelfSupervised(BaseModel):
         else:
             scheduler = None
 
+        scaler = torch.cuda.amp.GradScaler()
+
         train_tracking_loss = train_cl_loss = train_fc_loss = 0.0
         for step in range(exp_params['n_steps']):
             self.network.train()
@@ -94,25 +96,28 @@ class SelfSupervised(BaseModel):
                 X_fc, Y_fc = next(train_gen_forecast_iter)
 
             optimizer.zero_grad()
-            if torch.cuda.is_available():
-                X = X.to(torch.device('cuda'))
-                Y = Y.to(torch.device('cuda'))
-                X_fc = X_fc.to(torch.device('cuda'))
-                Y_fc = Y_fc.to(torch.device('cuda'))
 
-            Yhat_cl, Yhat_fc = self.network.forward_train(X, X_fc)
+            with torch.cuda.amp.autocast():
+                if torch.cuda.is_available():
+                    X = X.to(torch.device('cuda'))
+                    Y = Y.to(torch.device('cuda'))
+                    X_fc = X_fc.to(torch.device('cuda'))
+                    Y_fc = Y_fc.to(torch.device('cuda'))
 
-            loss_cl = objective_sup(Yhat_cl, Y)
-            loss_fc = objective_forecast(Yhat_fc, Y_fc)
-            loss = loss_cl + model_params['lambda'] * loss_fc
+                Yhat_cl, Yhat_fc = self.network.forward_train(X, X_fc)
+
+                loss_cl = objective_sup(Yhat_cl, Y)
+                loss_fc = objective_forecast(Yhat_fc, Y_fc)
+                loss = loss_cl + model_params['lambda'] * loss_fc
 
             # log losses
             train_tracking_loss += loss.item()
             train_cl_loss += loss_cl.item()
             train_fc_loss += loss_fc.item()
 
-            loss.backward()
-            optimizer.step()
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
             if scheduler is not None:
                 scheduler.step()
                 lr = scheduler.get_last_lr()[0]
