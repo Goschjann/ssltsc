@@ -86,7 +86,7 @@ class PAMAP2(TimeseriesDataset):
 
             data_file = 'subject10{}.dat'.format(subject_idx)
             data_path = os.path.join(extracted_path, 'Protocol', data_file)
-            data = pd.read_csv(data_path, sep='\s+', header=None)
+            data = pd.read_csv(data_path, sep=r'\s+', header=None)
 
             data.columns = columns
             # Amount of minutes for this subject
@@ -174,9 +174,9 @@ class PAMAP2(TimeseriesDataset):
         np.save(file=os.path.join(final_path, 'X_train.npy'), arr=X_train)
         np.save(file=os.path.join(final_path, 'X_test.npy'), arr=X_test)
         np.save(file=os.path.join(final_path, 'X_val.npy'), arr=X_val)
-        np.save(file=os.path.join(final_path, 'Y_train.npy'), arr=Y_train.astype(np.float64))
-        np.save(file=os.path.join(final_path, 'Y_test.npy'), arr=Y_test.astype(np.float64))
-        np.save(file=os.path.join(final_path, 'Y_val.npy'), arr=Y_val.astype(np.float64))
+        np.save(file=os.path.join(final_path, 'Y_train.npy'), arr=Y_train.astype(np.float32))
+        np.save(file=os.path.join(final_path, 'Y_test.npy'), arr=Y_test.astype(np.float32))
+        np.save(file=os.path.join(final_path, 'Y_val.npy'), arr=Y_val.astype(np.float32))
 
         shutil.rmtree(extracted_path)
         self.save_stats(X_train)

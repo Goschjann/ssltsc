@@ -1,0 +1,11 @@
+ssltsc.egg-info*
+.vscode*
+__pycache__*
+data/*
+.idea*
+*mlruns*
+*.vs*
+.DS_Store
+*.db
+*.png
+*.npy

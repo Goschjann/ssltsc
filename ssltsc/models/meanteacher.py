@@ -26,8 +26,7 @@ from .basemodel import BaseModel
 from ssltsc.models.utils import calculate_classification_metrics
 from ssltsc.visualization import store_reliability
 
-# use float64 instead of the default float32
-torch.set_default_dtype(torch.float64)
+torch.set_default_dtype(torch.float32)
 
 class MeanTeacher(BaseModel):
     """Mean Teacher model class
@@ -110,6 +109,8 @@ class MeanTeacher(BaseModel):
 
         track_class_loss, track_cons_loss = 0, 0
 
+        scaler = torch.cuda.amp.GradScaler()
+
         for step in range(exp_params['n_steps']):
             try:
                 (X_stud, X_teach), Y = next(train_gen_iter)
@@ -117,33 +118,35 @@ class MeanTeacher(BaseModel):
                 train_gen_iter = iter(data_dict['train_gen_l'])
                 (X_stud, X_teach), Y = next(train_gen_iter)
 
-            if torch.cuda.is_available():
-                X_stud = X_stud.to(torch.device('cuda'))
-                X_teach = X_teach.to(torch.device('cuda'))
-                Y = Y.to(torch.device('cuda'))
+            with torch.cuda.amp.autocast():
+                if torch.cuda.is_available():
+                    X_stud = X_stud.to(torch.device('cuda'))
+                    X_teach = X_teach.to(torch.device('cuda'))
+                    Y = Y.to(torch.device('cuda'))
 
-            yhat_all_stud = self.student(X_stud)
-            with torch.no_grad():
-                yhat_all_teach = self.teacher(X_teach)
-            minibatch_size = len(Y)
+                yhat_all_stud = self.student(X_stud)
+                with torch.no_grad():
+                    yhat_all_teach = self.teacher(X_teach)
+                minibatch_size = len(Y)
 
-            # objective_sup discards -1 labeled data
-            loss_sup = objective_sup(yhat_all_stud, Y) / minibatch_size
-            # combine losses
-            beta = model_params['max_w'] * rampup(current=step,
-                                                  rampup_length=model_params['rampup_length'])
-            # mse over the predictions on all samples
-            # softmax happens inside the loss
-            # consistency loss
-            loss_cons = beta * softmax_mse_loss(yhat_all_stud, yhat_all_teach) / minibatch_size
-            loss = loss_sup + loss_cons
+                # objective_sup discards -1 labeled data
+                loss_sup = objective_sup(yhat_all_stud, Y) / minibatch_size
+                # combine losses
+                beta = model_params['max_w'] * rampup(current=step,
+                                                    rampup_length=model_params['rampup_length'])
+                # mse over the predictions on all samples
+                # softmax happens inside the loss
+                # consistency loss
+                loss_cons = beta * softmax_mse_loss(yhat_all_stud, yhat_all_teach) / minibatch_size
+                loss = loss_sup + loss_cons
             track_class_loss += loss_sup.item()
             track_cons_loss += loss_cons.item()
 
             # update student
             optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
             # update teacher via exponential moving average
             ema_update(student=self.student,
                        teacher=self.teacher,

@@ -122,9 +122,9 @@ class SITS(TimeseriesDataset):
         np.save(file=os.path.join(final_path, 'X_train.npy'), arr=X_train)
         np.save(file=os.path.join(final_path, 'X_test.npy'), arr=X_test)
         np.save(file=os.path.join(final_path, 'X_val.npy'), arr=X_val)
-        np.save(file=os.path.join(final_path, 'Y_train.npy'), arr=Y_train.astype(np.float64).squeeze(1))
-        np.save(file=os.path.join(final_path, 'Y_test.npy'), arr=Y_test.astype(np.float64).squeeze(1))
-        np.save(file=os.path.join(final_path, 'Y_val.npy'), arr=Y_val.astype(np.float64).squeeze(1))
+        np.save(file=os.path.join(final_path, 'Y_train.npy'), arr=Y_train.astype(np.float32).squeeze(1))
+        np.save(file=os.path.join(final_path, 'Y_test.npy'), arr=Y_test.astype(np.float32).squeeze(1))
+        np.save(file=os.path.join(final_path, 'Y_val.npy'), arr=Y_val.astype(np.float32).squeeze(1))
 
         self.save_stats(X_train)
         self.extract_features_from_npy()

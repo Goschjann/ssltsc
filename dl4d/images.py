@@ -51,7 +51,6 @@ class ImageDataset(data.Dataset):
         if self.transform:
             x = torch.tensor(x).to(torch.float32)
             x = self.transform(x)
-            x = x.to(torch.float64)
 
         if self.labelled_idxs and index not in self.labelled_idxs:
             y = -1
@@ -65,7 +64,7 @@ class ImageDataset(data.Dataset):
         path = os.path.join(self.root, self.base_folder)
 
         x_path = os.path.join(path, 'X_{}.npy'.format(part))
-        x = np.load(file=x_path).astype('float64')
+        x = np.load(file=x_path).astype('float32')
 
         y = np.load(file=os.path.join(path, 'Y_{}.npy'.format(part))).astype('int')
 

@@ -103,6 +103,8 @@ class Supervised(BaseModel):
         else:
             scheduler = None
 
+        scaler = torch.cuda.amp.GradScaler()
+
         for step in range(exp_params['n_steps']):
             self.network.train()
 
@@ -120,19 +122,26 @@ class Supervised(BaseModel):
                 Y = self._indices_to_one_hot(data=Y, n_classes=train_gen.dataset.nclasses)  # FIXME: The train_gen is not defined??
                 X, Y = self._mixup(x1=X, x2=X, y1=Y, y2=Y, shuffle=True)
             optimizer.zero_grad()
-            if torch.cuda.is_available():
-                X = X.to(torch.device('cuda'))
-                Y = Y.to(torch.device('cuda'))
 
-            Yhat = self.network(X)
-            if model_params['mixup']:
-                loss = mixup_cross_entropy(Yhat, Y.long())
-            else:
-                loss = objective_sup(Yhat, Y.long())
+            # casts operations to mixed precision
+            with torch.cuda.amp.autocast():
+                if torch.cuda.is_available():
+                    X = X.to(torch.device('cuda'))
+                    Y = Y.to(torch.device('cuda'))
 
-            loss.backward()
-            optimizer.step()
-            print(f'Optimizer step {step}')
+                Yhat = self.network(X)
+                if model_params['mixup']:
+                    loss = mixup_cross_entropy(Yhat, Y.long())
+                else:
+                    loss = objective_sup(Yhat, Y.long())
+
+            # scales the loss, and calls backward() to create scaled gradients
+            scaler.scale(loss).backward()
+            # unscales gradients and calls optimizer.step()
+            scaler.step(optimizer)
+            # updates the scale for next iteration
+            scaler.update()
+
             if scheduler is not None:
                 scheduler.step()
                 lr = scheduler.get_last_lr()[0]

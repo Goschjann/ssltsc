@@ -39,7 +39,7 @@ FC_PARAMETERS_2 = {
     'variance_larger_than_standard_deviation': None,
 }
 
-np_type = 'float64'
+np_type = 'float32'
 
 def load_stats(path):
     with open('{}/stats.json'.format(path)) as f:

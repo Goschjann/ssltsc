@@ -12,7 +12,7 @@ This framework allows the evaluation of the performance of SSL algorithms initia
 
 This pytorch-based codebase allows you to run experiments in a reproducible manner and to track and visualize your single experiments via [mlflow](www.mlflow.org/).
 The core of this framework are two sub-packages `dl4d` for data loading and sampling in a semi-supervised manner and `ssltsc` which contains different backbone architectures, baseline models and the semi-supervised learning strategies.
-To control the hyperparameters and general arguments for the model runs, you want to use the `config` files specifying single experiments in `sslts/experiments/config_files`.
+To control the hyperparameters and general arguments for the model runs, you want to use the `config` files specifying single experiments in `ssltsc/experiments/config_files`.
 Hyperparameter tuning is possible based upon this config file syntax using Hyperband as implemented in [optuna](www.optuna.org/).
 
 All models in this repository were developed using image classification datasets (Cifar10, SVHN) as comparison to validate the correctness of the code. This means, you can use it not only for semi-supervised time series classification but also as a starting point for semi-supervised image classification.
@@ -24,11 +24,11 @@ The following UML diagram gives a detailed overview on the different components 
 
 ## Get Started
 
-Install the `requirements.txt` in a clean python environment via `pip install -r requirements.txt`. Then install the module `sslts` by running `pip install -e .` from the parent level of this repository.
+Install the `requirements.txt` in a clean python environment via `pip install -r requirements.txt`. Then install the module `ssltsc` by running `pip install -e .` from the parent level of this repository.
 
 ## Examples
 
-The following are some examples on how to train or tune different algorithms on different datasets using this framework. Datasets are downloaded to the folder `data` on the fly if they are used the first time. These code-snippets should be run from `sslts/experiments`. Then
+The following are some examples on how to train or tune different algorithms on different datasets using this framework. Datasets are downloaded to the folder `data` on the fly if they are used the first time. These code-snippets should be run from `ssltsc/experiments`. Then
 
 To train a `mixmatch` model with an FCN backbone on the `pamap2` Dataset for `1000` update steps storing the results in the mlflow experiment `hello_mixmatch_fcn`, run:
 
@@ -58,7 +58,7 @@ python tune.py --config config_files/meanteacher.yaml --num_labels 1000 --time_b
 
 ### Algorithms
 
-All algorithms are stored in `sslts.models`. Currently, the following semi-supervised algorithms are implemented within this framework:
+All algorithms are stored in `ssltsc.models`. Currently, the following semi-supervised algorithms are implemented within this framework:
 
 * Mixmatch by [Berthelot et al. (2019)](https://arxiv.org/abs/1905.02249)
 * Virtual Adversarial Training by [Miyato et al. (2017)](https://arxiv.org/abs/1704.03976)

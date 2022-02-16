@@ -65,8 +65,8 @@ class SVHN(ImageDataset):
         np.save(file=os.path.join(final_path, 'X_train.npy'), arr=X_train)
         np.save(file=os.path.join(final_path, 'X_test.npy'), arr=X_test)
         np.save(file=os.path.join(final_path, 'X_val.npy'), arr=X_val)
-        np.save(file=os.path.join(final_path, 'Y_train.npy'), arr=Y_train.astype(np.float64))
-        np.save(file=os.path.join(final_path, 'Y_test.npy'), arr=Y_test.astype(np.float64))
-        np.save(file=os.path.join(final_path, 'Y_val.npy'), arr=Y_val.astype(np.float64))
+        np.save(file=os.path.join(final_path, 'Y_train.npy'), arr=Y_train.astype(np.float32))
+        np.save(file=os.path.join(final_path, 'Y_test.npy'), arr=Y_test.astype(np.float32))
+        np.save(file=os.path.join(final_path, 'Y_val.npy'), arr=Y_val.astype(np.float32))
 
         os.system('rm {}/train_32x32.mat; rm -rf {}/test_32x32.mat'.format(final_path, final_path))

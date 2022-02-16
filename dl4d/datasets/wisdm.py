@@ -97,7 +97,7 @@ class WISDM(TimeseriesDataset):
             idx = np.argmax(cnt)
             labels.append(v[idx])
 
-        X = np.nan_to_num(np.asarray(windows, dtype=np.float64))
+        X = np.nan_to_num(np.asarray(windows, dtype=np.float32))
 
         # Encode the labels to ints
         Y = pd.DataFrame(labels, columns=['label'])
@@ -125,9 +125,9 @@ class WISDM(TimeseriesDataset):
         np.save(file=os.path.join(final_path, 'X_train.npy'), arr=X_train)
         np.save(file=os.path.join(final_path, 'X_test.npy'), arr=X_test)
         np.save(file=os.path.join(final_path, 'X_val.npy'), arr=X_val)
-        np.save(file=os.path.join(final_path, 'Y_train.npy'), arr=Y_train.astype(np.float64).squeeze(1))
-        np.save(file=os.path.join(final_path, 'Y_test.npy'), arr=Y_test.astype(np.float64).squeeze(1))
-        np.save(file=os.path.join(final_path, 'Y_val.npy'), arr=Y_val.astype(np.float64).squeeze(1))
+        np.save(file=os.path.join(final_path, 'Y_train.npy'), arr=Y_train.astype(np.float32).squeeze(1))
+        np.save(file=os.path.join(final_path, 'Y_test.npy'), arr=Y_test.astype(np.float32).squeeze(1))
+        np.save(file=os.path.join(final_path, 'Y_val.npy'), arr=Y_val.astype(np.float32).squeeze(1))
 
         shutil.rmtree(extracted_path)
         self.save_stats(X_train)

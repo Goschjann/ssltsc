@@ -16,7 +16,7 @@ from .utils import linear_rampup
 from .basemodel import BaseModel
 from .utils import calculate_classification_metrics
 
-torch.set_default_dtype(torch.float64)
+torch.set_default_dtype(torch.float32)
 
 
 class MixMatch(BaseModel):
@@ -132,6 +132,8 @@ class MixMatch(BaseModel):
 
         train_l_loss, train_ul_loss, train_mixmatch_loss = [0] * 3
 
+        scaler = torch.cuda.amp.GradScaler()
+
         for step in range(exp_params['n_steps']):
             #start_time = datetime.datetime.now()
             optimizer.zero_grad()
@@ -153,94 +155,96 @@ class MixMatch(BaseModel):
             x_u1 = x_1[idx_unlabeled]
             x_u2 = x_2[idx_unlabeled]
 
-            if torch.cuda.is_available():
-                x_l = x_l.to(torch.device('cuda'))
-                y_l = y_l.to(torch.device('cuda'))
-                x_u1 = x_u1.to(torch.device('cuda'))
-                x_u2 = x_u2.to(torch.device('cuda'))
+            with torch.cuda.amp.autocast():
+                if torch.cuda.is_available():
+                    x_l = x_l.to(torch.device('cuda'))
+                    y_l = y_l.to(torch.device('cuda'))
+                    x_u1 = x_u1.to(torch.device('cuda'))
+                    x_u2 = x_u2.to(torch.device('cuda'))
 
-            # use notation from paper from now on
-            xb = x_l
-            # label guessing step for x_u
-            ub = [x_u1, x_u2]
-            # no autograd here, we take the guessed labels fo real bro
-            with torch.no_grad():
-                # guess labels for usv samples via EMA in Mean Teacher
-                outputs = [self.network(u).softmax(1) for u in ub]
-                # take mean of the K augmented predictions
-                output = sum(i for i in outputs) / len(outputs)
-                # see lines 7 and 8 of the algorithm
-                qb = self._sharpen(output, model_params['T'])
-                Ux = torch.cat(ub, dim=0)
-                # replicate sharpened predictions qb K times
-                Uy = torch.cat([qb for _ in range(model_params['K'])], dim=0).detach()
+                # use notation from paper from now on
+                xb = x_l
+                # label guessing step for x_u
+                ub = [x_u1, x_u2]
+                # no autograd here, we take the guessed labels fo real bro
+                with torch.no_grad():
+                    # guess labels for usv samples via EMA in Mean Teacher
+                    outputs = [self.network(u).softmax(1) for u in ub]
+                    # take mean of the K augmented predictions
+                    output = sum(i for i in outputs) / len(outputs)
+                    # see lines 7 and 8 of the algorithm
+                    qb = self._sharpen(output, model_params['T'])
+                    Ux = torch.cat(ub, dim=0)
+                    # replicate sharpened predictions qb K times
+                    Uy = torch.cat([qb for _ in range(model_params['K'])], dim=0).detach()
 
-            # shuffle step
-            rand_idx = np.arange(len(xb) + len(Ux))
-            np.random.shuffle(rand_idx)
+                # shuffle step
+                rand_idx = np.arange(len(xb) + len(Ux))
+                np.random.shuffle(rand_idx)
 
-            # one-hot encode y as this is required by mixup
-            # guessed labels are already `one hot encoded`
-            Y_enc = y_l.detach().cpu().numpy()
-            Y_enc = self._indices_to_one_hot(Y_enc, self.n_classes)
-            Y_enc = torch.from_numpy(Y_enc).to(torch.device('cuda'))
+                # one-hot encode y as this is required by mixup
+                # guessed labels are already `one hot encoded`
+                Y_enc = y_l.detach().cpu().numpy()
+                Y_enc = self._indices_to_one_hot(Y_enc, self.n_classes)
+                Y_enc = torch.from_numpy(Y_enc).to(torch.device('cuda'))
 
-            # Wx and Wy are shuffled versions of the combined data set
-            # to ensure in the mixup not the same X's are mixed up (sic!)
-            Wx = torch.cat([xb, Ux], dim=0)[rand_idx.astype(int)]
-            Wy = torch.cat([Y_enc, Uy], dim=0)
-            Wy = Wy[rand_idx]
+                # Wx and Wy are shuffled versions of the combined data set
+                # to ensure in the mixup not the same X's are mixed up (sic!)
+                Wx = torch.cat([xb, Ux], dim=0)[rand_idx.astype(int)]
+                Wy = torch.cat([Y_enc, Uy], dim=0)
+                Wy = Wy[rand_idx]
 
-            # mix the labeled examples with the first n_labeled samples
-            # of the shuffles W-matrix up
-            X, xp = self._mixup(xb, Wx[:len(xb)], Y_enc, Wy[:len(xb)],
-                                 model_params['alpha'], dtw=False)
-            U, uq = self._mixup(Ux, Wx[len(xb):], Uy, Wy[len(xb):],
-                                 model_params['alpha'], dtw=False)
+                # mix the labeled examples with the first n_labeled samples
+                # of the shuffles W-matrix up
+                X, xp = self._mixup(xb, Wx[:len(xb)], Y_enc, Wy[:len(xb)],
+                                    model_params['alpha'], dtw=False)
+                U, uq = self._mixup(Ux, Wx[len(xb):], Uy, Wy[len(xb):],
+                                    model_params['alpha'], dtw=False)
 
-            X_all = torch.cat([X, U], dim=0)
+                X_all = torch.cat([X, U], dim=0)
 
-            ## INTERLEAVING
-            # use interleaving from yuui1 to get valid batch norm stats
-            n_labeled = xb.shape[0]
-            X_all = list(torch.split(X_all, n_labeled))
-            X_all = self._interleave(X_all, n_labeled)
-            preds = [self.network(X_all[0]).softmax(1)]
-            for inp in X_all[1:]:
-                preds.append(self.network(inp).softmax(1))
-            # re-interleave the samples
-            preds = self._interleave(preds, n_labeled)
-            preds_x = preds[0]
-            preds_u = torch.cat(preds[1:], dim=0)
-            #print('train step took {}'.format(datetime.datetime.now() - start_time))
+                ## INTERLEAVING
+                # use interleaving from yuui1 to get valid batch norm stats
+                n_labeled = xb.shape[0]
+                X_all = list(torch.split(X_all, n_labeled))
+                X_all = self._interleave(X_all, n_labeled)
+                preds = [self.network(X_all[0]).softmax(1)]
+                for inp in X_all[1:]:
+                    preds.append(self.network(inp).softmax(1))
+                # re-interleave the samples
+                preds = self._interleave(preds, n_labeled)
+                preds_x = preds[0]
+                preds_u = torch.cat(preds[1:], dim=0)
+                #print('train step took {}'.format(datetime.datetime.now() - start_time))
 
-            if step % exp_params['val_steps'] == 0 and model_params['plot_mixup'] == 1:
-                visualization.plot_mixup(X1=xb[0], X2=Wx[0], X=X[0],
-                                         Y1=Y_enc[0], Y2=Wy[0], Y=xp[0],
-                                         comment='step{}'.format(step))
+                if step % exp_params['val_steps'] == 0 and model_params['plot_mixup'] == 1:
+                    visualization.plot_mixup(X1=xb[0], X2=Wx[0], X=X[0],
+                                            Y1=Y_enc[0], Y2=Wy[0], Y=xp[0],
+                                            comment='step{}'.format(step))
 
-            # loss_labeled: XE
-            # mean cross entropy labeled mixmatch labels p and model
-            # predictions on labeled mixmatch input p_model
-            # careful: preds are already softmaxed!
-            # print('step {} target size {} pred size {}'.format(step, xp.shape[0], preds_x.shape[0]))
-            loss_labeled = -torch.mean(torch.sum(xp * torch.log(preds_x), 1))
+                # loss_labeled: XE
+                # mean cross entropy labeled mixmatch labels p and model
+                # predictions on labeled mixmatch input p_model
+                # careful: preds are already softmaxed!
+                # print('step {} target size {} pred size {}'.format(step, xp.shape[0], preds_x.shape[0]))
+                loss_labeled = -torch.mean(torch.sum(xp * torch.log(preds_x), 1))
 
-            # loss_unlabeled: mean squared error
-            loss_unlabeled = torch.mean((preds_u - uq)**2)
+                # loss_unlabeled: mean squared error
+                loss_unlabeled = torch.mean((preds_u - uq)**2)
 
-            # combine losses
-            ramp_factor = linear_rampup(step=step,
-                                        rampup_length=model_params['rampup_length'])
-            loss_unlabeled = (model_params['lambda_u'] * ramp_factor) * loss_unlabeled
+                # combine losses
+                ramp_factor = linear_rampup(step=step,
+                                            rampup_length=model_params['rampup_length'])
+                loss_unlabeled = (model_params['lambda_u'] * ramp_factor) * loss_unlabeled
 
-            mixmatch_loss = loss_labeled + loss_unlabeled
-            train_l_loss += loss_labeled.item()
-            train_ul_loss += loss_unlabeled.item()
-            train_mixmatch_loss += mixmatch_loss.item()
+                mixmatch_loss = loss_labeled + loss_unlabeled
+                train_l_loss += loss_labeled.item()
+                train_ul_loss += loss_unlabeled.item()
+                train_mixmatch_loss += mixmatch_loss.item()
             # print('step {} mmloss {:.4f} lloss {:.4f} ulloss {:.4f}'.format(step, mixmatch_loss.item(), loss_labeled.item(), loss_unlabeled.item()))
-            mixmatch_loss.backward()
-            optimizer.step()
+            scaler.scale(mixmatch_loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
 
             # # update teacher via exponential moving average
             # ema_update(student=self.model,
