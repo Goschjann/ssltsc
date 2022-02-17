@@ -11,7 +11,7 @@ from dl4d.datasets.wisdm import WISDM
 from dl4d.datasets.cifar10 import Cifar10
 from dl4d.datasets.svhn import SVHN
 from dl4d.sampler import SemiSupervisionSampler, SupervisionSampler
-from dl4d.transforms import TSRandomCrop, TSTimeWarp, TSMagWarp, TSMagScale, TSTimeNoise, TSCutOut, TSMagNoise, RandAugment, DuplicateTransform
+from dl4d.transforms import TSRandomCrop, TSTimeWarp, TSMagWarp, TSMagScale, TSTimeNoise, TSCutOut, TSMagNoise, RandAugment, DuplicateTransform, TransformFixMatch
 
 from functools import partial
 
@@ -93,7 +93,8 @@ def load_dataloaders(path: str,
                      horizon: float = None,
                      stride: float = None,
                      val_size: int = 1000,
-                     test_size: int = 2000):
+                     test_size: int = 2000,
+                     **kwargs):
 
     dataset_classes = {
         'pamap2': PAMAP2,
@@ -115,20 +116,44 @@ def load_dataloaders(path: str,
     # Select the data augmentation strategy
     if da_strategy == 'tf_rand_1' and dataset not in ['cifar10', 'svhn']:
         transform = tf_rand_1
+        test_transform = None
     elif da_strategy == 'randaug' and dataset not in ['cifar10', 'svhn']:
         transform = make_randaug(N=N, magnitude=magnitude)
+        test_transform = None
+    elif da_strategy == 'fixmatch':
+        sample_supervised = True
+        if dataset not in ['cifar10', 'svhn']:
+            transform = None # TODO
+            test_transform = None
+        else:
+            # labelled transform
+            transform = transforms.Compose([
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomCrop(size=32,
+                                    padding=int(32*0.125),
+                                    padding_mode='reflect'),
+                transforms.ToTensor(),
+                transforms.Normalize(**channel_stats)
+            ])
+            # unlabelled transform
+            unlabelled_transform = TransformFixMatch(**channel_stats)
+            # test transform
+            test_transform = transforms.Normalize(**channel_stats)
     elif dataset == 'cifar10' and da_strategy is not False:
         transform = train_cifar10_transformation_2
+        test_transform = test_cifar10_transformation_1
     elif dataset == 'svhn' and da_strategy is not False:
         transform = train_cifar10_transformation_5
+        test_transform = test_cifar10_transformation_1
     else:
         transform = None
+        test_transform = None
 
     # Load duplicates of x as required by MixMatch and MeanTeacher
     if K > 1:
         transform = DuplicateTransform(transform=transform, duplicates=K)
 
-    train_ds = dataset_class(root=path, part='train',
+    train_ds = dataset_class(root=path, part='train', # labelled dataset with labelled transform and num_labels
                              task='classification',
                              features=features,
                              transform=transform, target_transform=None,
@@ -165,7 +190,7 @@ def load_dataloaders(path: str,
     val_ds = dataset_class(root=path, part='val',
                            task='classification',
                            features=features,
-                           transform=None, target_transform=None,
+                           transform=test_transform, target_transform=None,
                            standardize=standardize, normalize=normalize,
                            scale_overall=scale_overall,
                            scale_channelwise=scale_channelwise,
@@ -175,7 +200,7 @@ def load_dataloaders(path: str,
     test_ds = dataset_class(root=path, part='test',
                             task='classification',
                             features=features,
-                            transform=None, target_transform=None,
+                            transform=test_transform, target_transform=None,
                             standardize=standardize, normalize=normalize,
                             scale_overall=scale_overall,
                             scale_channelwise=scale_channelwise,
@@ -191,6 +216,28 @@ def load_dataloaders(path: str,
                                     num_labels_in_dataset=num_labels,
                                     drop_last=True,
                                     seed=seed)
+
+    if da_strategy == 'fixmatch':
+        train_ds_ul = dataset_class(root=path, part='train',
+                                    task='classification',
+                                    features=features,
+                                    transform=unlabelled_transform, target_transform=None,
+                                    standardize=standardize, normalize=normalize,
+                                    scale_overall=scale_overall,
+                                    scale_channelwise=scale_channelwise,
+                                    val_size=val_size,
+                                    test_size=test_size)
+        ul_size = len(train_ds_ul)
+        train_dl_u = get_train_dataloader(dataset=train_ds_ul,
+                                          batch_size=batch_size * kwargs.get('mu', 7),
+                                          num_workers=num_workers,
+                                          sample_supervised=sample_supervised,
+                                          num_labels_in_batch=labeled_batch_size,
+                                          num_labels_in_dataset=ul_size,
+                                          drop_last=True,
+                                          seed=seed)
+    else:
+        train_dl_u = None
 
     if model == 'selfsupervised':
         # Basically supervised sampler of the forecast dataset
@@ -213,8 +260,10 @@ def load_dataloaders(path: str,
 
     test_dl = get_inference_dataloader(test_ds, inference_batch_size, num_workers)
     val_dl = get_inference_dataloader(val_ds, inference_batch_size, num_workers)
+    pdb.set_trace()
 
     return {'train_gen_l': train_dl,
+            'train_gen_ul': train_dl_u,
             'train_gen_forecast': train_dl_forecast,
             'train_gen_val': train_dl_val,
             'test_gen': test_dl,
