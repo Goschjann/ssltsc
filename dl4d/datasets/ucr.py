@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 from dl4d.timeseries import TimeseriesDataset
 from urllib.request import urlretrieve
 from pyunpack import Archive
-from sktime.utils.load_data import load_from_tsfile_to_dataframe
+from sktime.utils.data_io import load_from_tsfile_to_dataframe
 
 
 class UCR(TimeseriesDataset):
@@ -80,15 +80,15 @@ class UCR(TimeseriesDataset):
                                                             random_state=self.seed,
                                                             stratify=Y_test)
 
-        np.save(file=os.path.join(final_path, 'X_train.npy'), arr=X_train.astype(np.float64))
-        np.save(file=os.path.join(final_path, 'X_test.npy'), arr=X_test.astype(np.float64))
-        np.save(file=os.path.join(final_path, 'X_val.npy'), arr=X_val.astype(np.float64))
-        np.save(file=os.path.join(final_path, 'Y_train.npy'), arr=Y_train.astype(np.float64))
-        np.save(file=os.path.join(final_path, 'Y_test.npy'), arr=Y_test.astype(np.float64))
-        np.save(file=os.path.join(final_path, 'Y_val.npy'), arr=Y_val.astype(np.float64))
+        np.save(file=os.path.join(final_path, 'X_train.npy'), arr=X_train.astype(np.float32))
+        np.save(file=os.path.join(final_path, 'X_test.npy'), arr=X_test.astype(np.float32))
+        np.save(file=os.path.join(final_path, 'X_val.npy'), arr=X_val.astype(np.float32))
+        np.save(file=os.path.join(final_path, 'Y_train.npy'), arr=Y_train.astype(np.float32))
+        np.save(file=os.path.join(final_path, 'Y_test.npy'), arr=Y_test.astype(np.float32))
+        np.save(file=os.path.join(final_path, 'Y_val.npy'), arr=Y_val.astype(np.float32))
 
         shutil.rmtree(extracted_path)
-        self.save_stats(X_train.astype(np.float64))
+        self.save_stats(X_train.astype(np.float32))
         self.extract_features_from_npy()
 
 

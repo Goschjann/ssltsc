@@ -146,6 +146,8 @@ class LadderNet(BaseModel):
         else:
             scheduler = None
 
+        scaler = torch.cuda.amp.GradScaler()
+
         for step in range(exp_params['n_steps']):
             self.network.train()  # Set the network in train mode
 
@@ -159,20 +161,23 @@ class LadderNet(BaseModel):
                 X, Y = next(train_gen_iter)
 
             optimizer.zero_grad()
-            if torch.cuda.is_available():
-                X = X.to(torch.device('cuda'))
-                Y = Y.to(torch.device('cuda'))
 
-            yhat_all, hidden_reps = self.network(X, return_hidden_representations=True)
+            with torch.cuda.amp.autocast():
+                if torch.cuda.is_available():
+                    X = X.to(torch.device('cuda'))
+                    Y = Y.to(torch.device('cuda'))
 
-            loss, _ = self._calculate_total_loss(yhat_all, Y,
-                                                 zs=hidden_reps['zs'],
-                                                 zhats=hidden_reps['hat_zs'],
-                                                 batch_mean=hidden_reps['batch_means'],
-                                                 batch_std=hidden_reps['batch_std'],
-                                                 step=step)
-            loss.backward()
-            optimizer.step()
+                yhat_all, hidden_reps = self.network(X, return_hidden_representations=True)
+
+                loss, _ = self._calculate_total_loss(yhat_all, Y,
+                                                    zs=hidden_reps['zs'],
+                                                    zhats=hidden_reps['hat_zs'],
+                                                    batch_mean=hidden_reps['batch_means'],
+                                                    batch_std=hidden_reps['batch_std'],
+                                                    step=step)
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
 
             if scheduler is not None:
                 scheduler.step()

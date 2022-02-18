@@ -5,7 +5,7 @@ import torch.nn as nn
 
 from torch.nn import init
 
-torch.set_default_dtype(torch.float64)
+torch.set_default_dtype(torch.float32)
 
 
 class Affine(nn.Module):

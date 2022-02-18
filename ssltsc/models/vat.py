@@ -97,6 +97,8 @@ class VAT(BaseModel):
 
         train_ce_loss, train_vat_loss, train_ent_loss, train_tracking_loss = [0] * 4
 
+        scaler = torch.cuda.amp.GradScaler()
+
         for step in range(exp_params['n_steps']):
             optimizer.zero_grad()
 
@@ -113,37 +115,40 @@ class VAT(BaseModel):
             y_l = y[idx_labeled]# .squeeze(1)
             #print('data sorting took {}'.format(datetime.datetime.now() - start_time))
 
-            if torch.cuda.is_available():
-                x_l = x_l.to(torch.device('cuda'))
-                y_l = y_l.to(torch.device('cuda'))
-                x_ul = x_ul.to(torch.device('cuda'))
-            # pdb.set_trace()
-            logit = self.network(x_l)
-            ce_loss = ce(logit, y_l)
+            # casts operations to mixed precision
+            with torch.cuda.amp.autocast():
+                if torch.cuda.is_available():
+                    x_l = x_l.to(torch.device('cuda'))
+                    y_l = y_l.to(torch.device('cuda'))
+                    x_ul = x_ul.to(torch.device('cuda'))
+                # pdb.set_trace()
+                logit = self.network(x_l)
+                ce_loss = ce(logit, y_l)
 
-            y_ul = self.network(x_ul)
-            if step % 1000 == 0 and step > 0 and model_params['plot_adversarials']:
-                plot_adv = True
-            else:
-                plot_adv = False
+                y_ul = self.network(x_ul)
+                if step % 1000 == 0 and step > 0 and model_params['plot_adversarials']:
+                    plot_adv = True
+                else:
+                    plot_adv = False
 
-            vat_loss = self.vat_loss(x_ul=x_ul,
-                                     y_ul=y_ul,
-                                     xi=model_params['xi'],
-                                     epsilon=model_params['epsilon'],
-                                     method=model_params['method'],
-                                     plot=plot_adv,
-                                     step=step)
+                vat_loss = self.vat_loss(x_ul=x_ul,
+                                        y_ul=y_ul,
+                                        xi=model_params['xi'],
+                                        epsilon=model_params['epsilon'],
+                                        method=model_params['method'],
+                                        plot=plot_adv,
+                                        step=step)
 
-            if model_params['method'] == 'vatent':
-                ent_loss = losses.entropy_loss(y_ul)
-                loss = ce_loss + vat_loss + ent_loss
-            else:
-                loss = ce_loss + vat_loss
+                if model_params['method'] == 'vatent':
+                    ent_loss = losses.entropy_loss(y_ul)
+                    loss = ce_loss + vat_loss + ent_loss
+                else:
+                    loss = ce_loss + vat_loss
 
             optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
 
             # log losses
             train_tracking_loss += loss.item()
@@ -183,7 +188,7 @@ class VAT(BaseModel):
             callback.on_train_end(self.history)
 
     def vat_loss(self, x_ul, y_ul, xi, epsilon, method, plot=False, step=0):
-        d = torch.cuda.DoubleTensor(x_ul.size()).normal_()
+        d = torch.cuda.HalfTensor(x_ul.size()).normal_()
         d = xi * self._l2_normalize(d)
         d.requires_grad_()
         y_hat = self.network(x_ul + d)

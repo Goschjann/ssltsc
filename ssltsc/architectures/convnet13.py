@@ -16,8 +16,7 @@ import pdb
 from torch.autograd import Variable, Function
 from torch.nn import Parameter
 
-# use float64 instead of the default float32
-torch.set_default_dtype(torch.float64)
+torch.set_default_dtype(torch.float32)
 
 # weight normalization layers and gaussian noise injection
 
