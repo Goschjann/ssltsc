@@ -130,5 +130,5 @@ class WISDM(TimeseriesDataset):
         np.save(file=os.path.join(final_path, 'Y_val.npy'), arr=Y_val.astype(np.float32).squeeze(1))
 
         shutil.rmtree(extracted_path)
-        self.save_stats(X_train)
+        self.save_stats(X_train.astype(np.float64))
         self.extract_features_from_npy()
