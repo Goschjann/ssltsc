@@ -11,7 +11,8 @@ from dl4d.datasets.wisdm import WISDM
 from dl4d.datasets.cifar10 import Cifar10
 from dl4d.datasets.svhn import SVHN
 from dl4d.sampler import SemiSupervisionSampler, SupervisionSampler
-from dl4d.transforms import TSRandomCrop, TSTimeWarp, TSMagWarp, TSMagScale, TSTimeNoise, TSCutOut, TSMagNoise, RandAugment, DuplicateTransform, TransformFixMatch
+from dl4d.transforms import TSRandomCrop, TSTimeWarp, TSMagWarp, TSMagScale, TSTimeNoise, \
+    TSCutOut, TSMagNoise, RandAugment, DuplicateTransform, TransformFixMatch, RandAugmentMC
 
 from functools import partial
 
@@ -127,23 +128,14 @@ def load_dataloaders(path: str,
             test_transform = None
         else:
             # labelled transform
-            transform = transforms.Compose([
-                transforms.ToPILImage(),
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomCrop(size=32,
-                                    padding=int(32*0.125),
-                                    padding_mode='reflect'),
-                transforms.ToTensor(),
-                transforms.Normalize(**channel_stats)
-            ])
+            transform = weak_cifar10_transformation
             # unlabelled transform
-            unlabelled_transform = TransformFixMatch(**channel_stats)
+            unlabelled_transform = TransformFixMatch(
+                weak=weak_cifar10_transformation,
+                strong=strong_cifar10_transformation
+            )
             # test transform
-            test_transform = transforms.Compose([
-                transforms.ToPILImage(),
-                transforms.ToTensor(),
-                transforms.Normalize(**channel_stats)
-            ])
+            test_transform = test_cifar10_transformation_1
     elif dataset == 'cifar10' and da_strategy is not False:
         transform = train_cifar10_transformation_2
         test_transform = test_cifar10_transformation_1
@@ -375,3 +367,23 @@ daug_proc = [TSTimeWarp,
             TSMagWarp,
             TSTimeNoise,
             TSMagScale]
+
+
+# Fixmatch transforms
+
+weak_cifar10_transformation = transforms.Compose([
+    transforms.ToPILImage(),
+    transforms.RandomHorizontalFlip(),
+    transforms.RandomCrop(size=32, padding=int(32*0.125), padding_mode='reflect'),
+    transforms.ToTensor(),
+    transforms.Normalize(**channel_stats)
+])
+
+strong_cifar10_transformation = transforms.Compose([
+    transforms.ToPILImage(),
+    transforms.RandomHorizontalFlip(),
+    transforms.RandomCrop(size=32, padding=int(32*0.125), padding_mode='reflect'),
+    RandAugmentMC(n=2, m=10),
+    transforms.ToTensor(),
+    transforms.Normalize(**channel_stats)
+])
