@@ -128,6 +128,7 @@ def load_dataloaders(path: str,
         else:
             # labelled transform
             transform = transforms.Compose([
+                transforms.ToPILImage(),
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomCrop(size=32,
                                     padding=int(32*0.125),
@@ -138,7 +139,11 @@ def load_dataloaders(path: str,
             # unlabelled transform
             unlabelled_transform = TransformFixMatch(**channel_stats)
             # test transform
-            test_transform = transforms.Normalize(**channel_stats)
+            test_transform = transforms.Compose([
+                transforms.ToPILImage(),
+                transforms.ToTensor(),
+                transforms.Normalize(**channel_stats)
+            ])
     elif dataset == 'cifar10' and da_strategy is not False:
         transform = train_cifar10_transformation_2
         test_transform = test_cifar10_transformation_1

@@ -461,11 +461,13 @@ class RandAugmentMC(object):
 class TransformFixMatch(object):
     def __init__(self, mean, std):
         self.weak = transforms.Compose([
+            transforms.ToPILImage(),
             transforms.RandomHorizontalFlip(),
             transforms.RandomCrop(size=32,
                                   padding=int(32*0.125),
                                   padding_mode='reflect')])
         self.strong = transforms.Compose([
+            transforms.ToPILImage(),
             transforms.RandomHorizontalFlip(),
             transforms.RandomCrop(size=32,
                                   padding=int(32*0.125),
