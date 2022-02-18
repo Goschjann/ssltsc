@@ -131,8 +131,8 @@ def load_dataloaders(path: str,
             transform = weak_cifar10_transformation
             # unlabelled transform
             unlabelled_transform = TransformFixMatch(
-                weak=weak_cifar10_transformation,
-                strong=strong_cifar10_transformation
+                weak_transform=weak_cifar10_transformation,
+                strong_transform=strong_cifar10_transformation
             )
             # test transform
             test_transform = test_cifar10_transformation_1
@@ -177,7 +177,7 @@ def load_dataloaders(path: str,
     clean_train_ds = dataset_class(root=path, part='train',
                                    task='classification',
                                    features=features,
-                                   transform=None, target_transform=None,
+                                   transform=test_transform, target_transform=None,
                                    standardize=standardize, normalize=normalize,
                                    scale_overall=scale_overall,
                                    scale_channelwise=scale_channelwise,
