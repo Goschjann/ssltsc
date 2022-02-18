@@ -222,7 +222,7 @@ def load_dataloaders(path: str,
                                     drop_last=True,
                                     seed=seed)
 
-    if da_strategy == 'fixmatch':
+    if model == 'fixmatch':
         train_ds_ul = dataset_class(root=path, part='train',
                                     task='classification',
                                     features=features,
