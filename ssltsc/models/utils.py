@@ -1,13 +1,11 @@
 """Utility functions for submodule 'models'
 """
-from torch.utils import data
-from torch import nn, optim
-
-import pdb
-import torch
-import sktime
+from copy import deepcopy
+import math
 import numpy as np
 import pandas as pd
+import pdb
+import torch
 
 from sklearn.metrics import log_loss, roc_auc_score, f1_score
 from uncertainty_metrics.numpy import ece
@@ -108,3 +106,100 @@ def calculate_classification_metrics(pred_prob_y, true_y) -> dict:
     metrics['weighted_f1'] = f1_score(y_true=true_y, y_pred=yhat_hard, average='weighted', labels=labels)
 
     return metrics
+
+
+def get_cosine_schedule_with_warmup(optimizer,
+                                    num_warmup_steps,
+                                    num_training_steps,
+                                    num_cycles=7./16.,
+                                    last_epoch=-1):
+    def _lr_lambda(current_step):
+        if current_step < num_warmup_steps:
+            return float(current_step) / float(max(1, num_warmup_steps))
+        no_progress = float(current_step - num_warmup_steps) / \
+            float(max(1, num_training_steps - num_warmup_steps))
+        return max(0., math.cos(math.pi * num_cycles * no_progress))
+
+    return torch.optim.lr_scheduler.LambdaLR(optimizer, _lr_lambda, last_epoch)
+
+
+class ModelEMA(object):
+    def __init__(self, model, ema_decay, device):
+        self.ema = deepcopy(model)
+        self.ema.to(device)
+        self.ema.eval()
+        self.decay = ema_decay
+        self.ema_has_module = hasattr(self.ema, 'module')
+        # Fix EMA. https://github.com/valencebond/FixMatch_pytorch thank you!
+        self.param_keys = [k for k, _ in self.ema.named_parameters()]
+        self.buffer_keys = [k for k, _ in self.ema.named_buffers()]
+        for p in self.ema.parameters():
+            p.requires_grad_(False)
+
+    def update(self, model):
+        needs_module = hasattr(model, 'module') and not self.ema_has_module
+        with torch.no_grad():
+            msd = model.state_dict()
+            esd = self.ema.state_dict()
+            for k in self.param_keys:
+                if needs_module:
+                    j = 'module.' + k
+                else:
+                    j = k
+                model_v = msd[j].detach()
+                ema_v = esd[k]
+                esd[k].copy_(ema_v * self.decay + (1. - self.decay) * model_v)
+
+            for k in self.buffer_keys:
+                if needs_module:
+                    j = 'module.' + k
+                else:
+                    j = k
+                esd[k].copy_(msd[j])
+
+
+def interleave(x, size):
+    s = list(x.shape)
+    return x.reshape([-1, size] + s[1:]).transpose(0, 1).reshape([-1] + s[1:])
+
+
+def de_interleave(x, size):
+    s = list(x.shape)
+    return x.reshape([size, -1] + s[1:]).transpose(0, 1).reshape([-1] + s[1:])
+
+
+def accuracy(output, target, topk=(1,)):
+    """Computes the precision@k for the specified values of k"""
+    maxk = max(topk)
+    batch_size = target.size(0)
+
+    _, pred = output.topk(maxk, 1, True, True)
+    pred = pred.t()
+    correct = pred.eq(target.reshape(1, -1).expand_as(pred))
+
+    res = []
+    for k in topk:
+        correct_k = correct[:k].reshape(-1).float().sum(0)
+        res.append(correct_k.mul_(1.0 / batch_size))
+    return res
+
+
+class AverageMeter(object):
+    """Computes and stores the average and current value
+       Imported from https://github.com/pytorch/examples/blob/master/imagenet/main.py#L247-L262
+    """
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count

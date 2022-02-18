@@ -4,13 +4,15 @@ from ssltsc.models.selfsupervised import SelfSupervised
 from ssltsc.models.mixmatch import MixMatch
 from ssltsc.models.meanteacher import MeanTeacher
 from ssltsc.models.vat import VAT
+from ssltsc.models.fixmatch import Fixmatch
 
 MODEL_DICT = {'supervised': Supervised,
               'vat': VAT,
               'mixmatch': MixMatch,
               'meanteacher': MeanTeacher,
               'ladder': LadderNet,
-              'selfsupervised': SelfSupervised}
+              'selfsupervised': SelfSupervised,
+              'fixmatch': Fixmatch}
 
 
 def model_factory(model_name, backbone, backbone_dict, callbacks):
