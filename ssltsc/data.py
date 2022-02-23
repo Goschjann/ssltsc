@@ -124,8 +124,12 @@ def load_dataloaders(path: str,
     elif da_strategy == 'fixmatch':
         sample_supervised = True
         if dataset not in ['cifar10', 'svhn']:
-            transform = None # TODO
-            test_transform = None
+            transform = TSMagNoise()
+            unlabelled_transform = TransformFixMatch(
+                weak_transform=TSMagNoise(),
+                strong_transform=make_randaug(N=2, magnitude=10)
+            )
+            test_transform = None # pre-normalized data
         else:
             # labelled transform
             transform = weak_cifar10_transformation
