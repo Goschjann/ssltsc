@@ -129,13 +129,15 @@ class TimerCallback(Callback):
             self.batch_times = []
 
 class TuneCallback(Callback):
-    def __init__(self, trial: Trial):
+    def __init__(self, trial: Trial, tuning_criterion: str):
         self.trial = trial
+        self.tuning_criterion = tuning_criterion
 
     def on_validation_end(self, step: int, metrics: dict):
-        value = metrics['val_weighted_auc']
+        assert self.tuning_criterion in metrics.keys(), 'Your tuning criterion is not part of the tracked performance metrics'
+        value = metrics[self.tuning_criterion]
         print(f'Trial {self.trial._trial_id} step {step} with value {value}')
-        self.trial.report(metrics['val_weighted_auc'], step)
+        self.trial.report(metrics[self.tuning_criterion], step)
 
         if self.trial.should_prune():
             raise optuna.TrialPruned()
