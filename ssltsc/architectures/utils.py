@@ -14,6 +14,7 @@ from ssltsc.architectures.fcn_multitask import FCNMultitask
 from ssltsc.architectures.convlarge import ConvLarge, ConvLargeDecoder
 from ssltsc.architectures.ladder import Ladder
 from ssltsc.architectures.fcn import LadderFCN, LadderFCNDecoder
+from ssltsc.architectures.cnn_lstm import CNNLSTM
 from ssltsc.architectures.wideresnet28 import WideResNet28
 from ssltsc.architectures.convnet13 import ConvNet13
 from ssltsc.architectures.ResNet import ResNet
@@ -70,6 +71,23 @@ def backbone_factory(architecture, dataset, n_classes, n_channels, lengthts, hor
                                      'implemented for image data'
         backbone_dict = {'n_classes': n_classes, 'channels': n_channels}
         backbone = ConvLarge
+
+    elif architecture == 'CNNLSTM':
+        backbone = CNNLSTM
+        backbone_dict = {
+            'td_layer': "LSTM",
+            'num_classes': n_classes,
+            'c_in': n_channels,
+            'length_ts': lengthts
+        }
+    elif architecture == 'CNNBiLSTM':
+        backbone = CNNLSTM
+        backbone_dict = {
+            'td_layer': "BILSTM",
+            'num_classes': n_classes,
+            'c_in': n_channels,
+            'length_ts': lengthts
+        }
     else:
         backbone_dict = {'n_classes': n_classes,
                          'n_variables': n_channels,
