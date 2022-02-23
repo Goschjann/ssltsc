@@ -10,6 +10,7 @@ exp_params:
     mlflow_name: 'fixmatch_exps'
     early_stopping: True
     early_stopping_metric: 'val_weighted_auc'
+    tuning_criterion: 'val_weighted_auc'
 
 model_params:
     lr: 0.03

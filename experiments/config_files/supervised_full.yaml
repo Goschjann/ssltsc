@@ -1,7 +1,4 @@
-# 5 different param blocks
-
-logging_params:
-   mlflow_name: 'sup_exp'
+# 4 different param blocks
 
 exp_params:
     n_steps: 250
@@ -13,6 +10,7 @@ exp_params:
     mlflow_name: 'oof'
     early_stopping: False
     early_stopping_metric: 'val_weighted_auc'
+    tuning_criterion: 'val_weighted_auc'
 
 model_params:
     mixup: False
