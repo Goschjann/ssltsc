@@ -1,8 +1,8 @@
 # 4 different param blocks
 
 exp_params:
-    n_steps: 25000
-    val_steps: 5000
+    n_steps: 25
+    val_steps: 5
     lr_scheduler: None
     backbone: 'FCN'
     model_name: 'supervised'
@@ -21,7 +21,7 @@ data_params:
     path: '../data/'
     dataset: 'wisdm'
     model: 'supervised'
-    num_labels: 1000
+    num_labels: 500
     seed: 1249
     K: 1
     features: False
@@ -37,17 +37,17 @@ data_params:
     fully_labeled: False
     N: 3
     magnitude: 1
-    val_size: 100
+    val_size: 1000
     test_size: 2000
 
 search_space:
     lr:
-        low: 0.000001
+        low: 0.00001
         high: 0.01
         type: "log"
     weight_decay:
-        low: 0.0000001
-        high: 0.001
+        low: 0.000001
+        high: 0.0001
         type: "log"
     magnitude:
         low: 1

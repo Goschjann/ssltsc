@@ -127,7 +127,7 @@ def load_dataloaders(path: str,
             transform = TSMagNoise()
             unlabelled_transform = TransformFixMatch(
                 weak_transform=TSMagNoise(),
-                strong_transform=make_randaug(N=2, magnitude=10)
+                strong_transform=make_randaug(N=N, magnitude=magnitude)
             )
             test_transform = None # pre-normalized data
         else:

@@ -1,8 +1,8 @@
 # 4 different param blocks
 
 exp_params:
-    n_steps: 102400
-    val_steps: 1024
+    n_steps: 25
+    val_steps: 5
     lr_scheduler: cosine
     backbone: 'wideresnet28'
     model_name: 'fixmatch'
@@ -35,17 +35,17 @@ data_params:
     num_workers: 6
     N: 3
     magnitude: 1
-    val_size: 100
+    val_size: 1000
     test_size: 2000
 
 search_space:
     lr:
-        low: 0.000001
+        low: 0.00001
         high: 0.01
         type: "log"
     weight_decay:
-        low: 0.0000001
-        high: 0.001
+        low: 0.000001
+        high: 0.0001
         type: "log"
     magnitude:
         low: 1
@@ -57,3 +57,13 @@ search_space:
         high: 6
         step: 1
         type: "int"
+    threshold:
+        low: 0.75
+        high: 0.99
+        step: 0.01
+        type: "float"
+    lambda_u:
+        low: 0.5
+        high: 5.0
+        step: 0.1
+        type: "float"

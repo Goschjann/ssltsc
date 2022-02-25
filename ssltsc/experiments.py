@@ -8,7 +8,7 @@ import mlflow
 from pandas import DataFrame
 from optuna import Trial
 import plotly
-#plotly.io.kaleido.scope.default_format
+plotly.io.kaleido.scope.default_format
 
 def convert_to_best_config(config: dict, best_params: dict):
     best_config = config.copy()

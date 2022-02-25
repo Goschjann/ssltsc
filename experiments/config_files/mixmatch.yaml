@@ -43,7 +43,7 @@ data_params:
     num_workers: 6
     N: 3
     magnitude: 1
-    val_size: 100
+    val_size: 1000
     test_size: 2000
 
 search_space:
@@ -63,12 +63,12 @@ search_space:
         step: 2500
         type: "int"
     lr:
-        low: 0.000001
-        high: 0.001
+        low: 0.00001
+        high: 0.01
         type: "log"
     weight_decay:
-        low: 0.0000001
-        high: 0.001
+        low: 0.000001
+        high: 0.0001
         type: "log"
     magnitude:
         low: 1
