@@ -1,6 +1,4 @@
-# 5 different param blocks
-logging_params:
-    mlflow_name: 'ladder_exp'
+# 4 different param blocks
 
 exp_params:
     n_steps: 25000
@@ -12,6 +10,7 @@ exp_params:
     mlflow_name: 'laddernet'
     early_stopping: False
     early_stopping_metric: 'val_weighted_auc'
+    tuning_criterion: 'val_weighted_auc'
 
 data_params:
     path: '../data/'

@@ -25,7 +25,7 @@ class Fixmatch(BaseModel):
     def load_checkpoint(self):
         checkpoint = torch.load(self.checkpoint_file.name)
         network = checkpoint['model']
-        self.es_step = checkpoint['epoch']
+        self.es_step = checkpoint['step']
 
         if self.use_ema:
             network.load_state_dict(checkpoint['ema_state_dict'])

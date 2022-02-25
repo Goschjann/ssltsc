@@ -24,6 +24,9 @@ def parse_args():
                         help='time budget in sec (default: 1000)')
     parser.add_argument('--reduction_factor', type=int, default=3, metavar='MU',
                         help='reduction factor (default: 3)')
+    parser.add_argument('--no_pruner', default=False, action='store_true',
+                        help='set flag to stop pruning. '
+                             'hyperband pruning used by default')
     return parser.parse_args()
 
 def run_experiment(args):
@@ -69,7 +72,7 @@ def run_experiment(args):
                                                    lengthts=data_dict['train_data_l'].length,
                                                    horizon=tuner_config['model_params']['horizon'] if 'horizon' in tuner_config['model_params'].keys() else None)
 
-        callbacks = [TuneCallback(trial)]
+        callbacks = [TuneCallback(trial=trial, tuning_criterion=configuration['exp_params']['tuning_criterion'])]
         model = model_factory(model_name=configuration['exp_params']['model_name'],
                               backbone=backbone,
                               backbone_dict=backbone_dict,
@@ -82,14 +85,16 @@ def run_experiment(args):
                     model_params=tuner_config['model_params'],
                     exp_params=tuner_config['exp_params'])
 
-        return model.history['val_weighted_auc'].iloc[-1]
+        return model.history[configuration['exp_params']['tuning_criterion']].iloc[-1]
 
-
-    pruner = optuna.pruners.HyperbandPruner(
-        min_resource=configuration['exp_params']['val_steps'],
-        max_resource=configuration['exp_params']['n_steps'],
-        reduction_factor=args.reduction_factor
-    )
+    if args.no_pruner:
+        pruner = optuna.pruners.NopPruner()
+    else:
+        pruner = optuna.pruners.HyperbandPruner(
+            min_resource=configuration['exp_params']['val_steps'],
+            max_resource=configuration['exp_params']['n_steps'],
+            reduction_factor=args.reduction_factor
+        )
 
     # Use the objective for optuna
     study = optuna.create_study(direction='maximize',
@@ -111,7 +116,7 @@ def run_experiment(args):
     # get the best out of three
     df = df.iloc[:3, :]
 
-    for idx, storage_name in zip(range(3), ['bbest_', 'second_best_', 'third_best_']):
+    for idx, storage_name in zip(range(3), ['first_best_', 'second_best_', 'third_best_']):
         param_names = ['params_' + param for param in [*configuration['search_space']]]
         foo = dict(df.filter(param_names).iloc[idx, :])
         hpc = {k.split('_')[1]: float(v) for k, v in foo.items()}
