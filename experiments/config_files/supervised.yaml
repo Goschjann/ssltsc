@@ -1,8 +1,8 @@
 # 4 different param blocks
 
 exp_params:
-    n_steps: 25
-    val_steps: 5
+    n_steps: 25000
+    val_steps: 5000
     lr_scheduler: None
     backbone: 'FCN'
     model_name: 'supervised'

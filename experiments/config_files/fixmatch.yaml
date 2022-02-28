@@ -1,8 +1,8 @@
 # 4 different param blocks
 
 exp_params:
-    n_steps: 25
-    val_steps: 5
+    n_steps: 25000
+    val_steps: 5000
     lr_scheduler: cosine
     backbone: 'wideresnet28'
     model_name: 'fixmatch'
@@ -26,7 +26,7 @@ data_params:
     path: '../data/'
     dataset: 'cifar10'
     model: 'fixmatch'
-    num_labels: 4000
+    num_labels: 500
     seed: 1249
     da_strategy: 'fixmatch'
     batch_size: 64
