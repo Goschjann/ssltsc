@@ -33,7 +33,12 @@ class CNNLSTM(nn.Module):
             out_features_model = int(120 * ((length_ts / 2) / 2))
         else:
             raise ValueError("Not implemented Layer: " + str(td_layer))
-        
+
+        # Super hack!!
+        # print(out_features_model)
+        if length_ts == 46:
+            out_features_model = 1100
+
         self.classifier = nn.Sequential(
            nn.Linear(in_features=out_features_model, out_features=100),
            nn.BatchNorm1d(100),
@@ -57,7 +62,6 @@ class CNNLSTM(nn.Module):
             x = self.model_act(selfmodelx)
             # print("nonzero weights lost after relu(tempconvnet): ", nonzeroweights - torch.sum(x != 0))
             x = x.flatten(1)
-            
         logits = self.classifier(x)
         
         if not probits:
