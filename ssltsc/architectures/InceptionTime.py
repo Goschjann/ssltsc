@@ -12,7 +12,7 @@ class InceptionModule(nn.Module):
         ks = [ks // (2**i) for i in range(3)]
         ks = [k if k % 2 != 0 else k - 1 for k in ks]  # ensure odd ks
         bottleneck = bottleneck if ni > 1 else False
-        self.bottleneck = Conv1d(ni, nf, 1, bias=False) if bottleneck else noop
+        self.bottleneck = Conv1d(ni, nf, 1, bias=False) if bottleneck else nn.Identity()
         self.convs = nn.ModuleList([Conv1d(nf if bottleneck else ni, nf, k, bias=False) for k in ks])
         self.maxconvpool = nn.Sequential(*[nn.MaxPool1d(3, stride=1, padding=1), Conv1d(ni, nf, 1, bias=False)])
         self.concat = Concat()

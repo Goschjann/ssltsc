@@ -47,7 +47,10 @@ def backbone_factory(architecture, dataset, n_classes, n_channels, lengthts, hor
     elif architecture == 'inceptiontime':
         backbone = InceptionTime
         backbone_dict = {'c_in': n_channels,
-                         'c_out': n_classes}
+                         'c_out': n_classes,
+                         'depth': 12,
+                         'nf': 64
+                         }
     elif architecture == 'rescnn':
         backbone = ResCNN
         backbone_dict = {'c_in': n_channels,
