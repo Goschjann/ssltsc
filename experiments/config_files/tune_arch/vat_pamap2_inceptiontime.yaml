@@ -1,0 +1,69 @@
+data_params:
+  K: 1
+  N: 3
+  batch_size: 64
+  da_strategy: randaug
+  dataset: pamap2
+  features: false
+  labeled_batch_size: 16
+  magnitude: 10
+  model: vat
+  normalize: false
+  num_labels: 500
+  num_workers: 0
+  path: ../data/
+  sample_supervised: false
+  scale_channelwise: false
+  scale_overall: true
+  seed: 1249
+  standardize: false
+  test_size: 2000
+  val_size: 1000
+exp_params:
+  backbone: inceptiontime
+  early_stopping: true
+  early_stopping_metric: val_weighted_auc
+  lr_scheduler: None
+  mlflow_id: 1
+  mlflow_name: tuning_first_try
+  model_name: vat
+  n_steps: 25000
+  tuning_criterion: val_weighted_auc
+  val_steps: 5000
+model_params:
+  alpha: 3.3000000000000003
+  epsilon: 3.3000000000000003
+  lr: 0.0012147008694478087
+  method: vatent
+  plot_adversarials: false
+  weight_decay: 2.3674793560226783e-06
+  xi: 1.0e-07
+search_space:
+  N:
+    high: 6
+    low: 1
+    step: 1
+    type: int
+  alpha:
+    high: 5.0
+    low: 0.1
+    step: 0.1
+    type: float
+  epsilon:
+    high: 10.0
+    low: 0.1
+    step: 0.1
+    type: float
+  lr:
+    high: 0.01
+    low: 1.0e-05
+    type: log
+  magnitude:
+    high: 10
+    low: 1
+    step: 1
+    type: int
+  weight_decay:
+    high: 0.0001
+    low: 1.0e-06
+    type: log

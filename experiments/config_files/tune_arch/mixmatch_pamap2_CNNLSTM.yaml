@@ -1,0 +1,77 @@
+data_params:
+  K: 2
+  N: 3
+  batch_size: 128
+  da_strategy: randaug
+  dataset: pamap2
+  features: false
+  inference_batch_size: 128
+  labeled_batch_size: 64
+  magnitude: 6
+  model: mixmatch
+  normalize: false
+  num_labels: 500
+  num_workers: 0
+  path: ../data/
+  sample_supervised: false
+  scale_channelwise: false
+  scale_overall: true
+  seed: 1249
+  standardize: false
+  test_size: 2000
+  val_size: 1000
+exp_params:
+  backbone: CNNLSTM
+  early_stopping: true
+  early_stopping_metric: val_weighted_auc
+  lr_scheduler: None
+  mlflow_id: 1
+  mlflow_name: tuning_first_try
+  model_name: mixmatch
+  n_steps: 25000
+  tuning_criterion: val_weighted_auc
+  val_steps: 5000
+model_params:
+  K: 2
+  T: 0.5
+  alpha: 0.6
+  alpha_ema: 0.999
+  lambda_u: 10.0
+  lr: 0.004511358836669203
+  plot_mixup: false
+  rampup_length: 7500
+  weight_decay: 2.9564649295606484e-05
+search_space:
+  N:
+    high: 6
+    low: 1
+    step: 1
+    type: int
+  alpha:
+    high: 1.0
+    low: 0.5
+    step: 0.05
+    type: float
+  lambda_u:
+    high: 150.0
+    low: 0.0
+    step: 1.0
+    type: float
+  lr:
+    high: 0.01
+    low: 1.0e-05
+    type: log
+  magnitude:
+    high: 10
+    low: 1
+    step: 1
+    type: int
+  rampup_length:
+    high: 25000
+    low: 2500
+    step: 2500
+    type: int
+  weight_decay:
+    high: 0.0001
+    low: 1.0e-06
+    type: log
