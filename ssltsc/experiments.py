@@ -279,6 +279,8 @@ def get_base_argparser(description=None):
                         help='size of the validation data set (default: 1000)')
     parser.add_argument('--test_size', type=int, default=None, metavar='N',
                         help='size of the test data set (default: 1000)')
+    parser.add_argument('--pool', type=str, default=None,
+                         help='pool size for randaug: {large(7), medium(5), small(3)}, default: 7')
 
 
     # Model specific parameters

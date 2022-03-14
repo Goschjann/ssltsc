@@ -1,0 +1,55 @@
+data_params:
+  N: 2
+  batch_size: 64
+  da_strategy: fixmatch
+  dataset: crop
+  inference_batch_size: 128
+  magnitude: 3
+  pool: large
+  model: fixmatch
+  mu: 7
+  num_labels: 500
+  num_workers: 6
+  path: ../data/
+  seed: 1249
+  test_size: 2000
+  val_size: 1000
+exp_params:
+  backbone: FCN
+  early_stopping: true
+  early_stopping_metric: val_weighted_auc
+  lr_scheduler: cosine
+  mlflow_id: 1
+  mlflow_name: crop_tune
+  model_name: fixmatch
+  n_steps: 20000
+  tuning_criterion: val_weighted_auc
+  val_steps: 500
+model_params:
+  ema_decay: 0.999
+  lambda_u: 1
+  lr: 0.006208916628998184
+  temp: 1
+  threshold: 0.95
+  use_ema: true
+  warmup_epochs: 0
+  weight_decay: 7.185430686635402e-06
+search_space:
+  N:
+    high: 6
+    low: 1
+    step: 1
+    type: int
+  lr:
+    high: 0.01
+    low: 1.0e-06
+    type: log
+  magnitude:
+    high: 10
+    low: 1
+    step: 1
+    type: int
+  weight_decay:
+    high: 0.001
+    low: 1.0e-07
+    type: log

@@ -1,0 +1,75 @@
+# 4 different param blocks
+
+exp_params:
+    n_steps: 20000
+    val_steps: 500
+    lr_scheduler: None
+    backbone: 'FCN'
+    model_name: 'vat'
+    mlflow_id: 1
+    mlflow_name: 'oof'
+    early_stopping: True
+    early_stopping_metric: 'val_weighted_auc'
+    tuning_criterion: 'val_weighted_auc'
+
+model_params:
+    xi: 0.0000001
+    epsilon: 2.5
+    method: 'vatent'
+    alpha: 1.0
+    plot_adversarials: False
+    lr: 0.0001
+    weight_decay: 0.0
+
+data_params:
+    path: '../data/'
+    dataset: 'crop'
+    model: 'vat'
+    num_labels: 500
+    seed: 1249
+    K: 1
+    features: False
+    da_strategy: 'randaug'
+    pool: large
+    batch_size: 64
+    labeled_batch_size: 16
+    standardize: False
+    normalize: False
+    scale_overall: True
+    scale_channelwise: False
+    sample_supervised: False
+    num_workers: 6
+    N: 2
+    magnitude: 3
+    val_size: 1000
+    test_size: 2000
+
+search_space:
+    epsilon:
+        low: 0.1
+        high: 10.0
+        step: 0.1
+        type: "float"
+    alpha:
+        low: 0.1
+        high: 5.0
+        step: 0.1
+        type: "float"
+    lr:
+        low: 0.000001
+        high: 0.001
+        type: "log"
+    weight_decay:
+        low: 0.0000001
+        high: 0.001
+        type: "log"
+    magnitude:
+        low: 1
+        high: 10
+        step: 1
+        type: "int"
+    N:
+        low: 1
+        high: 6
+        step: 1
+        type: "int"

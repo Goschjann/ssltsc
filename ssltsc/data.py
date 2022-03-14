@@ -127,7 +127,7 @@ def load_dataloaders(path: str,
             transform = TSMagNoise()
             unlabelled_transform = TransformFixMatch(
                 weak_transform=TSMagNoise(),
-                strong_transform=make_randaug(N=2, magnitude=10)
+                strong_transform=make_randaug(N=N, magnitude=magnitude)
             )
             test_transform = None # pre-normalized data
         else:
@@ -293,14 +293,32 @@ tf_rand_2 = RandAugment([TSMagScale,
                          partial(TSTimeWarp, magnitude=8)])
 
 # parametrized random augmentation:
-def make_randaug(N=3, magnitude=1):
-    list_randaug = [TSTimeWarp,
-                    TSMagWarp,
-                    TSTimeNoise,
-                    TSMagNoise,
-                    TSMagScale,
-                    TSCutOut,
-                    TSRandomCrop]
+def make_randaug(N=3, magnitude=1, pool: str='large'):
+    """
+    pool: small, medium, large
+    """
+    if pool == 'large':
+        assert N <= 7, f"Max 7 daug procedures to choose from for pool size {pool}"
+        list_randaug = [TSTimeWarp,
+                        TSMagWarp,
+                        TSTimeNoise,
+                        TSMagNoise,
+                        TSMagScale,
+                        TSCutOut,
+                        TSRandomCrop]
+    if pool == 'medium':
+        assert N <= 5, f"Max 5 daug procedures to choose from for pool size {pool}"
+        list_randaug = [TSTimeWarp,
+                        TSMagWarp,
+                        TSTimeNoise,
+                        TSMagNoise,
+                        TSMagScale]
+    if pool == 'small':
+        assert N <= 3, f"Max 3 daug procedures to choose from for pool size {pool}"
+        list_randaug = [TSTimeNoise,
+                        TSMagNoise,
+                        TSMagScale]
+    
     return RandAugment(transformations=list_randaug,
                        num_transforms=N,
                        magnitude=magnitude)
