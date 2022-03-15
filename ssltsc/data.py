@@ -95,6 +95,7 @@ def load_dataloaders(path: str,
                      stride: float = None,
                      val_size: int = 1000,
                      test_size: int = 2000,
+                     pool: str = 'large',
                      **kwargs):
 
     dataset_classes = {
@@ -119,7 +120,7 @@ def load_dataloaders(path: str,
         transform = tf_rand_1
         test_transform = None
     elif da_strategy == 'randaug' and dataset not in ['cifar10', 'svhn']:
-        transform = make_randaug(N=N, magnitude=magnitude)
+        transform = make_randaug(N=N, magnitude=magnitude, pool=pool)
         test_transform = None
     elif da_strategy == 'fixmatch':
         sample_supervised = True
@@ -127,7 +128,7 @@ def load_dataloaders(path: str,
             transform = TSMagNoise()
             unlabelled_transform = TransformFixMatch(
                 weak_transform=TSMagNoise(),
-                strong_transform=make_randaug(N=N, magnitude=magnitude)
+                strong_transform=make_randaug(N=N, magnitude=magnitude, pool=pool)
             )
             test_transform = None # pre-normalized data
         else:
@@ -297,6 +298,7 @@ def make_randaug(N=3, magnitude=1, pool: str='large'):
     """
     pool: small, medium, large
     """
+    print(f'I AM USING THE {pool} POOL')
     if pool == 'large':
         assert N <= 7, f"Max 7 daug procedures to choose from for pool size {pool}"
         list_randaug = [TSTimeWarp,
